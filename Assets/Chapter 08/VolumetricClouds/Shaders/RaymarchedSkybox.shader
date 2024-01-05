@@ -5,7 +5,7 @@ Shader "Custom/RaymarchedSkybox"
         _CloudTex ("Cloud Texture", 2D) = "white" {}
 		_GradientTex("Cloud Lighting Gradient", 2D) = "white" {}
 
-		_CloudHeight("Cloud Height", Float) = 1000
+		_CloudHeight("Cloud Height", Float) = 500
 		_CloudThickness("Cloud Thickness", Float) = 700
 		_TopSurfaceScale("Top Surface Scale", Float) = 2
 		_BottomSurfaceScale("Bottom Surface Scale", Float) = 0.5
@@ -36,7 +36,7 @@ Shader "Custom/RaymarchedSkybox"
     	#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
         // This can't be set as a property because the for loop needs to be unrolled
-		#define SAMPLES 50
+		#define SAMPLES 40
 
         TEXTURE2D(_CloudTex); SAMPLER(sampler_CloudTex);
 		TEXTURE2D(_GradientTex); SAMPLER(sampler_GradientTex);
@@ -95,10 +95,10 @@ Shader "Custom/RaymarchedSkybox"
                     viewVector = viewVector / viewVector.y;
                     float3 viewerPosition = _WorldSpaceCameraPos;
 
-                    // transpose view position to height _CloudHeight
+                    // transpose view position to vertical _CloudHeight, how far along view direction need to move
                     float3 position = viewerPosition + viewVector * (_CloudHeight - viewerPosition.y);
 
-                    // move amount between samples
+                    // move amount between samples, before loop unrolling
                     float3 stepSize = viewVector * _CloudThickness / SAMPLES;
                     // make larger steps more opaque
                     float stepOpacity = 1 - (1 / (_CloudOpacity * length(stepSize) + 1));
@@ -129,13 +129,13 @@ Shader "Custom/RaymarchedSkybox"
                         {
                             float cloudTopHeightSmooth = 1 - (h * _TopSurfaceScale);
                             float cloudDarkness = 1 - saturate(cloudTopHeightSmooth - f);
-                            float4 cloudColor = SAMPLE_TEXTURE2D(_GradientTex, sampler_GradientTex, float2(cloudDarkness, 0));
+                            float4 cloudColor = float4(1, 1, 1, 1);
 
                             float distanceToSurface = min(cloudTopHeight - f, f - cloudBottomHeight);
                             float localOpacity = saturate(distanceToSurface / _CloudSoftness);
 
                             col += (1 - col.a) * stepOpacity * localOpacity * cloudColor;
-                            if (col.a > 0.99) // almost opaque: stop marching
+                            if (col.a > 0.90) // almost opaque: stop marching
                             {
                                 col.rgb *= 1 / col.a;
                                 col.a = 1;
