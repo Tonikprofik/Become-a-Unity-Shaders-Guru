@@ -108,21 +108,24 @@ Shader "Custom/RaymarchedSkybox"
                     float4 col = float4(_FogColor.rgb * cloudFog, cloudFog);
 
                     for (int i = 0; i < SAMPLES; i++)
-                    {
+                    {   // march ray along the view vector
                         position += stepSize;
-
+                        // move uv coordinates, 
                         float2 uv = (position.xz + _CloudSpeed.xy * _Time[1]) / _CloudScale.xy;
+                        // get density from cloud texture
                         float h = SAMPLE_TEXTURE2D(_CloudTex, sampler_CloudTex, uv).r;
-
-                        // Get two additional heights for the turbulence on the top and bottom of the clouds
+                        // based on current position, get 2 more heights for the turbulence 
+                        //on the top and bottom of the clouds
                         float2 uvt1 = (position.xz + _CloudSpeed.zw * _Time[1]) / _CloudScale.zw;
                         float2 uvt2 = uvt1;
+                        // shifts the second set of UV coordinates
+                        // render different parts of the turbulence texture
                         uvt2.y += 0.5;
-                        float ht1 = SAMPLE_TEXTURE2D(_CloudTex, sampler_CloudTex, uvt1).r;
-                        float ht2 = SAMPLE_TEXTURE2D(_CloudTex, sampler_CloudTex, uvt2).r;
+                        float htTop = SAMPLE_TEXTURE2D(_CloudTex, sampler_CloudTex, uvt1).r;
+                        float htBottom = SAMPLE_TEXTURE2D(_CloudTex, sampler_CloudTex, uvt2).r;
 
-                        float cloudTopHeight = 1 - (h * _TopSurfaceScale + ht1 * _TurbulenceScale);
-                        float cloudBottomHeight = h * _BottomSurfaceScale + ht2 * _TurbulenceScale;
+                        float cloudTopHeight = 1 - (h * _TopSurfaceScale + htTop * _TurbulenceScale);
+                        float cloudBottomHeight = h * _BottomSurfaceScale + htBottom * _TurbulenceScale;
 
                         float f = (position.y - _CloudHeight) / _CloudThickness;
                         if (f > cloudBottomHeight && f < cloudTopHeight)
@@ -143,7 +146,7 @@ Shader "Custom/RaymarchedSkybox"
                             }
                         }
                     }
-
+                    // amount of fog, depth effect 
                     float skyFog = 1 - (1 / (_FogSky * length(viewVector) + 1));
                     float4 totalSkyColor = lerp(_SkyColor, _FogColor, skyFog);
                     col += (1 - col.a) * totalSkyColor;

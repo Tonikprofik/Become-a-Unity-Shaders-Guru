@@ -34,8 +34,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _BottomSurfaceScale: 0.6
-    - _CloudHeight: 1000
-    - _CloudOpacity: 0.25
+    - _CloudHeight: 500
+    - _CloudOpacity: 1
     - _CloudSoftness: 0.05
     - _CloudThickness: 600
     - _FogClouds: 0.1
